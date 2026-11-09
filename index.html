@@ -61,7 +61,16 @@ function show(id){["home","quiz","results"].forEach(x=>document.getElementById(x
 function render(){let q=current[index];document.getElementById("modeLabel").textContent=lastMode==="all"?"ALL QUESTIONS":lastMode.toUpperCase();document.getElementById("counter").textContent=`Question ${index+1} of ${current.length}`;document.getElementById("progress").style.width=((index+1)/current.length*100)+"%";document.getElementById("topic").textContent=q.topic+(q.provisional?" · PROVISIONAL KEY":"");document.getElementById("answered").textContent=Object.keys(answers).length+" answered";document.getElementById("question").textContent=q.q;let box=document.getElementById("options");box.innerHTML="";q.shown.forEach((v,i)=>{let b=document.createElement("button");b.className="option"+(answers[q.id]===i?" selected":"");let l=document.createElement("span");l.className="letter";l.textContent=LETTERS[i];let t=document.createElement("span");t.textContent=v;b.append(l,t);b.onclick=()=>{answers[q.id]=i;render()};box.append(b)});document.getElementById("prev").disabled=index===0;document.getElementById("next").disabled=index===current.length-1;document.getElementById("submit").textContent=index===current.length-1?"Submit Exam":"Submit Exam"}
 function move(d){index=Math.max(0,Math.min(current.length-1,index+d));render()}
 function submitQuiz(){let unanswered=current.filter(q=>answers[q.id]===undefined).length;if(unanswered&&!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`))return;lastResults=current.map(q=>({...q,chosen:answers[q.id],ok:answers[q.id]===q.correctShown}));lastWrong=lastResults.filter(x=>!x.ok);let correct=lastResults.filter(x=>x.ok).length;let pct=Math.round(correct/current.length*100);document.getElementById("score").textContent=pct+"%";document.getElementById("correctCount").textContent=correct;document.getElementById("wrongCount").textContent=current.length-correct;document.getElementById("totalCount").textContent=current.length;document.getElementById("resultLine").textContent=`You answered ${correct} out of ${current.length} questions correctly.`;let review=document.getElementById("review");review.innerHTML="";lastResults.forEach((q,i)=>{let d=document.createElement("div");d.className="review";let h=document.createElement("h3");h.textContent=`${i+1}. ${q.q}`;d.append(h);let p=document.createElement("p");p.className=q.ok?"correct":"wrong";p.textContent=(q.ok?"✓ Correct":"✕ Incorrect")+(q.chosen===undefined?" · Not answered":` · Your answer: ${LETTERS[q.chosen]}. ${q.chosen===undefined?"":q.shown[q.chosen]}`);d.append(p);let c=document.createElement("p");c.className="correct";c.textContent=`Correct answer: ${LETTERS[q.correctShown]}. ${q.shown[q.correctShown]}`;d.append(c);if(q.provisional){let tag=document.createElement("span");tag.className="smalltag";tag.textContent="PROVISIONAL — no official key in PDF";d.append(tag)}review.append(d)});show("results");window.scrollTo(0,0)}
-const goalLines=["GOOOOOAL! دا ودييييييي 🔥😂","الشبكة اهتزت يا كابتن! ⚽🤣","الحارس اتفرج عليها وهي داخلة! 😭","يا نهار أبيض… جون كمان! 😂","دي مش تسديدة، دي صاروخ! 🚀⚽","الدفاع فين يا جماعة؟! 🤦‍♂️","واحد كمان في الشباك… يا ساتر! 🥅😂","الحارس محتاج إجازة بعد دي! 🧤🤣"];
+const goalLines=[
+ "وديــــيييييييييييي GOOOOL 🔥🔥😂",
+ "ونبي كمان واحددددة! 😂🔥",
+ "جوووون تالت! برافوووو علييييك 😂🔥",
+ "يا ساتر يا رب… الشبكة مش مستحملة! ⚽🤣",
+ "الحارس بيبص وراها وهي في الجون 😭😂",
+ "الدفاع فين يا جدعان؟! 🤦‍♂️🔥",
+ "دي مش تسديدة… دي صاروخ! 🚀⚽",
+ "هاتوا جون تاني… شكلها ليلة طويلة 😂🥅"
+];
 let penaltyGoals=0,penaltyDone=0;
 function startPenaltyShootout(){
  const scoreValue=Number(document.getElementById('score').textContent.replace('%',''));
@@ -80,7 +89,7 @@ function shootNextGoal(){
  setTimeout(()=>{
   penaltyDone++;
   document.getElementById('goalCount').textContent=`Goals: ${penaltyDone} / ${penaltyGoals}`;
-  document.getElementById('goalMessage').textContent=goalLines[Math.floor(Math.random()*goalLines.length)];
+  document.getElementById('goalMessage').textContent=penaltyDone<=3?goalLines[penaltyDone-1]:goalLines[3+Math.floor(Math.random()*(goalLines.length-3))];
   if(penaltyDone<penaltyGoals){document.getElementById('nextShot').classList.remove('hidden');}
   else{document.getElementById('finalPenaltyLine').textContent=`FINAL SCORE: ${penaltyGoals} goal${penaltyGoals===1?'':'s'} conceded! صاحبك اتبهدل كروياً 😂⚽`;}
  },900);

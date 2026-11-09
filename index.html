@@ -17,7 +17,7 @@ button{font:inherit}.primary,.secondary{border:0;border-radius:12px;padding:13px
 .actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}.actions div{display:flex;gap:9px}
 .result{text-align:center}.score{font-size:60px;font-weight:850;letter-spacing:-2px;margin:5px 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}.stat{background:#f7f9fc;border:1px solid var(--line);border-radius:13px;padding:15px}.stat strong{display:block;font-size:24px}.stat span{color:var(--muted);font-size:12px}
 .review{border-top:1px solid var(--line);padding:17px 0;text-align:left}.review h3{font-size:15px;line-height:1.45;margin:0 0 9px}.wrong{color:var(--red)}.correct{color:var(--green)}.smalltag{font-size:11px;border-radius:20px;padding:4px 8px;background:#fff2d9;color:#835a12;font-weight:750}
-.hidden{display:none!important}.footer{text-align:center;color:#98a2b3;font-size:12px;padding:24px 0}
+.penalty-wrap{margin:22px 0 8px;padding:18px;border:1px solid #dce5f3;border-radius:18px;background:linear-gradient(180deg,#f7fbff,#eef5ff);text-align:center}.penalty-wrap h2{margin:0 0 6px}.penalty-stage{position:relative;height:205px;max-width:440px;margin:15px auto 10px;overflow:hidden;border-radius:14px;background:repeating-linear-gradient(90deg,#258b52 0 44px,#2c995b 44px 88px);border-bottom:8px solid #e8f3ff}.goal{position:absolute;top:15px;left:50%;transform:translateX(-50%);width:190px;height:112px;border:8px solid #fff;border-bottom:0;background:repeating-linear-gradient(90deg,transparent 0 18px,rgba(255,255,255,.35) 18px 20px),repeating-linear-gradient(0deg,transparent 0 18px,rgba(255,255,255,.35) 18px 20px);box-shadow:0 0 0 2px rgba(0,0,0,.08)}.keeper{position:absolute;top:76px;left:calc(50% - 18px);font-size:44px;z-index:2;transition:transform .35s}.ball{position:absolute;left:12%;bottom:22px;font-size:30px;z-index:3;transition:none}.penalty-stage.shoot .ball{animation:shootBall .85s ease-in forwards}.penalty-stage.shoot .keeper{transform:translate(-45px,-8px) rotate(-25deg)}@keyframes shootBall{0%{left:12%;bottom:22px;transform:scale(1)}65%{left:49%;bottom:128px;transform:scale(.85)}100%{left:57%;bottom:105px;transform:scale(.65)}}.goal-msg{font-size:20px;font-weight:850;min-height:34px;margin:12px 0;color:#bd2534}.goal-count{font-size:15px;font-weight:800;color:#145b38}.penalty-btn{margin-top:12px}.hidden{display:none!important}.footer{text-align:center;color:#98a2b3;font-size:12px;padding:24px 0}
 @media(max-width:620px){.modes{grid-template-columns:1fr}.card{padding:19px}.actions{flex-direction:column}.actions>div{justify-content:space-between}.actions button{flex:1}.stats{gap:7px}.stat{padding:11px 7px}.stat strong{font-size:21px}}
 </style>
 </head>
@@ -45,6 +45,7 @@ button{font:inherit}.primary,.secondary{border:0;border-radius:12px;padding:13px
 <section id="results" class="hidden"><div class="card result">
 <div class="eyebrow">Exam complete</div><h1 style="margin:8px 0">Your Results</h1><div class="score" id="score">0%</div><p class="note" id="resultLine"></p>
 <div class="stats"><div class="stat"><strong id="correctCount">0</strong><span>Correct</span></div><div class="stat"><strong id="wrongCount">0</strong><span>Incorrect</span></div><div class="stat"><strong id="totalCount">0</strong><span>Total</span></div></div>
+<div class="penalty-wrap"><h2>⚽ Penalty Shootout</h2><p class="note" style="margin:0">Every full 3% below 100% = one goal conceded. Ready?</p><button class="primary penalty-btn" id="calculateGoals" onclick="startPenaltyShootout()">Calculate Goals ⚽</button><div id="penaltyGame" class="hidden"><div class="penalty-stage" id="penaltyStage"><div class="goal"></div><div class="keeper">🧤🧍</div><div class="ball">⚽</div></div><div class="goal-count" id="goalCount"></div><div class="goal-msg" id="goalMessage" aria-live="polite"></div><button class="secondary hidden" id="nextShot" onclick="nextPenaltyShot()">Next Shot ⚽</button><div class="note" id="finalPenaltyLine"></div></div></div>
 <div class="actions" style="justify-content:center"><button class="primary" onclick="retryWrong()">Retry Incorrect</button><button class="secondary" onclick="retryAll()">Retry All</button><button class="quiet" onclick="goHome()">Home</button></div>
 </div><div class="card"><h2 style="margin-top:0">Answer Review</h2><div id="review"></div></div></section>
 <div class="footer">Bioinformatics Quiz Simulator · Built for practice</div></main>
@@ -60,6 +61,31 @@ function show(id){["home","quiz","results"].forEach(x=>document.getElementById(x
 function render(){let q=current[index];document.getElementById("modeLabel").textContent=lastMode==="all"?"ALL QUESTIONS":lastMode.toUpperCase();document.getElementById("counter").textContent=`Question ${index+1} of ${current.length}`;document.getElementById("progress").style.width=((index+1)/current.length*100)+"%";document.getElementById("topic").textContent=q.topic+(q.provisional?" · PROVISIONAL KEY":"");document.getElementById("answered").textContent=Object.keys(answers).length+" answered";document.getElementById("question").textContent=q.q;let box=document.getElementById("options");box.innerHTML="";q.shown.forEach((v,i)=>{let b=document.createElement("button");b.className="option"+(answers[q.id]===i?" selected":"");let l=document.createElement("span");l.className="letter";l.textContent=LETTERS[i];let t=document.createElement("span");t.textContent=v;b.append(l,t);b.onclick=()=>{answers[q.id]=i;render()};box.append(b)});document.getElementById("prev").disabled=index===0;document.getElementById("next").disabled=index===current.length-1;document.getElementById("submit").textContent=index===current.length-1?"Submit Exam":"Submit Exam"}
 function move(d){index=Math.max(0,Math.min(current.length-1,index+d));render()}
 function submitQuiz(){let unanswered=current.filter(q=>answers[q.id]===undefined).length;if(unanswered&&!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`))return;lastResults=current.map(q=>({...q,chosen:answers[q.id],ok:answers[q.id]===q.correctShown}));lastWrong=lastResults.filter(x=>!x.ok);let correct=lastResults.filter(x=>x.ok).length;let pct=Math.round(correct/current.length*100);document.getElementById("score").textContent=pct+"%";document.getElementById("correctCount").textContent=correct;document.getElementById("wrongCount").textContent=current.length-correct;document.getElementById("totalCount").textContent=current.length;document.getElementById("resultLine").textContent=`You answered ${correct} out of ${current.length} questions correctly.`;let review=document.getElementById("review");review.innerHTML="";lastResults.forEach((q,i)=>{let d=document.createElement("div");d.className="review";let h=document.createElement("h3");h.textContent=`${i+1}. ${q.q}`;d.append(h);let p=document.createElement("p");p.className=q.ok?"correct":"wrong";p.textContent=(q.ok?"✓ Correct":"✕ Incorrect")+(q.chosen===undefined?" · Not answered":` · Your answer: ${LETTERS[q.chosen]}. ${q.chosen===undefined?"":q.shown[q.chosen]}`);d.append(p);let c=document.createElement("p");c.className="correct";c.textContent=`Correct answer: ${LETTERS[q.correctShown]}. ${q.shown[q.correctShown]}`;d.append(c);if(q.provisional){let tag=document.createElement("span");tag.className="smalltag";tag.textContent="PROVISIONAL — no official key in PDF";d.append(tag)}review.append(d)});show("results");window.scrollTo(0,0)}
+const goalLines=["GOOOOOAL! دا ودييييييي 🔥😂","الشبكة اهتزت يا كابتن! ⚽🤣","الحارس اتفرج عليها وهي داخلة! 😭","يا نهار أبيض… جون كمان! 😂","دي مش تسديدة، دي صاروخ! 🚀⚽","الدفاع فين يا جماعة؟! 🤦‍♂️","واحد كمان في الشباك… يا ساتر! 🥅😂","الحارس محتاج إجازة بعد دي! 🧤🤣"];
+let penaltyGoals=0,penaltyDone=0;
+function startPenaltyShootout(){
+ const scoreValue=Number(document.getElementById('score').textContent.replace('%',''));
+ penaltyGoals=Math.floor((100-scoreValue)/3);penaltyDone=0;
+ document.getElementById('calculateGoals').classList.add('hidden');
+ document.getElementById('penaltyGame').classList.remove('hidden');
+ document.getElementById('goalMessage').textContent='';
+ document.getElementById('finalPenaltyLine').textContent='';
+ document.getElementById('nextShot').classList.add('hidden');
+ if(penaltyGoals===0){document.getElementById('goalCount').textContent='0 goals conceded 🏆';document.getElementById('goalMessage').textContent='مفيش ولا جون! فل الفل يا أسطورة 🐐🏆';document.getElementById('finalPenaltyLine').textContent='100% تقريباً — صاحبك كسب الرهان!';return;}
+ document.getElementById('goalCount').textContent=`Goals: 0 / ${penaltyGoals}`;
+ shootNextGoal();
+}
+function shootNextGoal(){
+ const stage=document.getElementById('penaltyStage');stage.classList.remove('shoot');void stage.offsetWidth;stage.classList.add('shoot');
+ setTimeout(()=>{
+  penaltyDone++;
+  document.getElementById('goalCount').textContent=`Goals: ${penaltyDone} / ${penaltyGoals}`;
+  document.getElementById('goalMessage').textContent=goalLines[Math.floor(Math.random()*goalLines.length)];
+  if(penaltyDone<penaltyGoals){document.getElementById('nextShot').classList.remove('hidden');}
+  else{document.getElementById('finalPenaltyLine').textContent=`FINAL SCORE: ${penaltyGoals} goal${penaltyGoals===1?'':'s'} conceded! صاحبك اتبهدل كروياً 😂⚽`;}
+ },900);
+}
+function nextPenaltyShot(){document.getElementById('nextShot').classList.add('hidden');shootNextGoal();}
 function retryWrong(){if(!lastWrong.length){alert("Great work — there are no incorrect answers to retry.");return}lastMode="incorrect questions";begin(lastWrong.map(q=>BANK.questions.find(x=>x.id===q.id)))}
 function retryAll(){startMode(lastMode==="incorrect questions"?"all":lastMode)}
 function goHome(){show("home");window.scrollTo(0,0)}
